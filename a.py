@@ -3,6 +3,7 @@ import sys
 
 # cromatic = ['do', 'ra', 're', 'me', 'mi', 'fa',
 #            'se', 'so', 're', 'ra', 'te', 'ti']
+#
 
 cromatic = ['[d Q]', '[r V]', '[r e]', '[m e]', '[m I]', '[f V]',
             '[s e]', '[s Q]', '[l e]', '[l V]', '[t e]', '[t I]']

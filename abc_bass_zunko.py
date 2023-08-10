@@ -1,7 +1,8 @@
 from music21 import *
 from common import cromatic
+import sys
 
-score = converter.parse("Yoasobi_-_Racing_into_the_Night.musicxml")
+score = converter.parse(sys.argv[1])
 
 offset = 3
 cantus = score.parts[0]
@@ -9,6 +10,6 @@ cantus = score.parts[0]
 for i, n in enumerate(cantus.recurse().getElementsByClass('Note')):
     n.lyric = cromatic[(n.pitch.midi - offset) % 12]
 
-score.write('xml', fp='yorukake.xml')
+score.write('xml', fp=sys.argv[2])
 
 #score.show()

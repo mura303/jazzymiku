@@ -4,13 +4,13 @@ import sys
 
 score = converter.parse(sys.argv[1])
 
-offset = 0
+solfe_offset = int(sys.argv[3])
+pitch_offset = int(sys.argv[4])
 cantus = score.parts[0]
 
+
 for i, n in enumerate(cantus.recurse().getElementsByClass('Note')):
-    n.lyric = cromatic[(n.pitch.midi - offset) % 12]
-    n.pitch.midi -= 12
+    n.lyric = cromatic[(n.pitch.midi - solfe_offset) % 12]
+    n.pitch.midi += pitch_offset
 
 score.write('xml', fp=sys.argv[2])
-
-#score.show()

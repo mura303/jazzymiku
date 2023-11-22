@@ -4,7 +4,7 @@ import sys
 
 score = converter.parse(sys.argv[1])
 
-offset = 3
+offset = 0
 cantus = score.parts[0]
 
 for i, n in enumerate(cantus.recurse().getElementsByClass('Note')):

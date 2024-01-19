@@ -23,10 +23,6 @@ print(f"Number of sharps or flats: {num_sharps_flats}")
 
 key_diff = -num_sharps_flats
 
-def trim_silence( wavfile ):
-    tmpdir = pathlib.Path(tempfile.gettempdir())
-    tmpfile = tmpdir / 'tmpfile.wav'
-
 cantus = score.parts[0]
 
 for i, measure in enumerate(cantus.getElementsByClass(stream.Measure), start=1):

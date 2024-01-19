@@ -7,23 +7,26 @@ class NeutrinoRunner:
     def __init__(self):
         # 現在のPATHを取得
         current_path = os.environ.get('PATH')
-
+        sys.stdout.reconfigure(encoding='cp932')
+        sys.stderr.reconfigure(encoding='cp932')
+ 
         # 新しいPATHを作成
-        neutrinopath = os.path.join(os.path.dirname(__file__), '..\\NEUTRINO\\bin')
+#        neutrinopath = os.path.join(os.path.dirname(__file__), '../NEUTRINO/bin')
 
-        self.mod_path = f"{neutrinopath};{current_path}"
+#        self.mod_path = f"{neutrinopath}:{current_path}"
         
-        print(self.mod_path)
+#        print(self.mod_path)
 
 
     def run(self, command):
         """ コマンドラインコマンドを実行し、出力を表示する """
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={'PATH': self.mod_path})
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,                            cwd=os.path.join(os.path.dirname(__file__), '../NEUTRINO'))
+        
         stdout, stderr = process.communicate()
         if stdout:
-            print(stdout.decode())
+            print(stdout.decode(encoding='cp932'))
         if stderr:
-            print(stderr.decode())
+            print(stderr.decode(encoding='cp932'))
 
     def main(self, basename):
         # プロジェクト設定
@@ -60,16 +63,16 @@ class NeutrinoRunner:
 
         # コマンド実行
         print(f"{os.path.basename(__file__)}: start MusicXMLtoLabel")
-        self.run(["musicXMLtoLabel.exe", f"score/musicxml/{basename}.{SUFFIX}", f"score/label/full/{basename}.lab", f"score/label/mono/{basename}.lab"])
+        self.run(["bin/musicXMLtoLabel.exe", f"score/musicxml/{basename}.{SUFFIX}", f"score/label/full/{basename}.lab", f"score/label/mono/{basename}.lab"])
 
         print(f"{os.path.basename(__file__)}: start NEUTRINO")
-        self.run(["NEUTRINO.exe", f"score/label/full/{basename}.lab", f"score/label/timing/{basename}.lab", f"output/{basename}.f0", f"output/{basename}.melspec", f"model/{ModelDir}/", "-w", f"output/{basename}.mgc", f"output/{basename}.bap", "-n", "1", "-k", str(StyleShift), "-o", str(NumThreads), "-d", str(InferenceMode), "-t"])
+        self.run(["bin/NEUTRINO.exe", f"score/label/full/{basename}.lab", f"score/label/timing/{basename}.lab", f"output/{basename}.f0", f"output/{basename}.melspec", f"model/{ModelDir}/", "-w", f"output/{basename}.mgc", f"output/{basename}.bap", "-n", "1", "-k", str(StyleShift), "-o", str(NumThreads), "-d", str(InferenceMode), "-t"])
 
         print(f"{os.path.basename(__file__)}: start NSF")
-        self.run(["NSF.exe", f"output/{basename}.f0", f"output/{basename}.melspec", f"./model/{ModelDir}/{NsfModel}.bin", f"output/{basename}.wav", "-l", f"score/label/timing/{basename}.lab", "-n", "1", "-p", str(NumThreads), "-s", str(SamplingFreq), "-f", str(PitchShiftNsf), "-t"])
+        self.run(["bin/NSF.exe", f"output/{basename}.f0", f"output/{basename}.melspec", f"./model/{ModelDir}/{NsfModel}.bin", f"output/{basename}.wav", "-l", f"score/label/timing/{basename}.lab", "-n", "1", "-p", str(NumThreads), "-s", str(SamplingFreq), "-f", str(PitchShiftNsf), "-t"])
 
         print(f"{os.path.basename(__file__)}: start WORLD")
-        self.run(["WORLD.exe", f"output/{basename}.f0", f"output/{basename}.mgc", f"output/{basename}.bap", f"output/{basename}_world.wav", "-f", str(PitchShiftWorld), "-m", str(FormantShift), "-p", str(SmoothPitch), "-c", str(SmoothFormant), "-b", str(EnhanceBreathiness), "-n", str(NumThreads), "-t"])
+        self.run(["bin/WORLD.exe", f"output/{basename}.f0", f"output/{basename}.mgc", f"output/{basename}.bap", f"output/{basename}_world.wav", "-f", str(PitchShiftWorld), "-m", str(FormantShift), "-p", str(SmoothPitch), "-c", str(SmoothFormant), "-b", str(EnhanceBreathiness), "-n", str(NumThreads), "-t"])
 
         print(f"{os.path.basename(__file__)}: end")
 

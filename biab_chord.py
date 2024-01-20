@@ -11,7 +11,10 @@ args = parser.parse_args()
 
 score = converter.parse(args.file)
 
-cantus = score.parts[0]
+bass_in = score.parts[0]
+melody_in = score.parts[-1]  # 最後のパートがメロディーと仮定
+print(f"bass_part: {bass_in.partName}")
+print(f"melody_part: {melody_in.partName}")
 
 
 key = score.analyze('key')
@@ -23,16 +26,19 @@ print(f"Number of sharps or flats: {num_sharps_flats}")
 key_diff = num_sharps_flats
 
 
-beats_per_measure = cantus.getTimeSignatures()[0].numerator
+beats_per_measure = bass_in.getTimeSignatures()[0].numerator
 
-new_score = stream.Score()
-tempo = cantus.metronomeMarkBoundaries()[0][-1]
-new_score.insert(0, tempo)
+bass_out = stream.Score()
+melody_out = stream.Score()
 
+tempo = bass_in.metronomeMarkBoundaries()[0][-1]
+bass_out.insert(0, tempo)
+melody_out.insert(0, tempo)
+last_pitch = None # おかしな楽譜だとありえるので例外が出るようにしておく
 
-for i, measure in enumerate(cantus.getElementsByClass(stream.Measure)):
+for i, measure in enumerate(bass_in.getElementsByClass(stream.Measure)):
     if i<2:
-        new_score.append(note.Rest( quarterLength=4 ))
+        bass_out.append(note.Rest(quarterLength=4))
         continue
 
     chords = list(measure.recurse().getElementsByClass('Harmony'))
@@ -48,12 +54,40 @@ for i, measure in enumerate(cantus.getElementsByClass(stream.Measure)):
                 pitch += 12
             while pitch > 84:
                 pitch -= 12
-            new_score.append( note.Note( pitch=pitch, quarterLength=beats[i], 
-                                         lyric = cromatic[(pitch+key_diff) % 12]) )
+            bass_out.append(note.Note(pitch=pitch, quarterLength=beats[i],
+                                      lyric=cromatic[(pitch+key_diff) % 12]))
             last_pitch = pitch
     else:
-        new_score.append(note.Note( pitch=last_pitch, quarterLength=4,
-                                    lyric = cromatic[(pitch+key_diff) % 12]) )
+        bass_out.append(note.Note(pitch=last_pitch, quarterLength=4,
+                                  lyric=cromatic[(last_pitch+key_diff) % 12]))
 
-    
-new_score.write('xml', fp=args.outfile)
+
+def too_long_tie(last_note):
+    if isinstance(last_note, note.Rest): # 変換されて休符になってる
+        return True
+    if last_note.tie and last_note.tie.type == "stop":
+        return True
+    return False
+
+
+for measure in melody_in.getElementsByClass(stream.Measure):
+    for n in measure.notesAndRests:
+        if isinstance(n, note.Note):
+            if n.tie and too_long_tie(melody_out[-1]):  # タイの先頭以外は休符にする、NEUTRINOが変になるから
+                melody_out.append(note.Rest(quarterLength=n.quarterLength))
+            else:
+                new_note = note.Note(pitch=n.pitch.midi,
+                                     quarterLength=n.quarterLength,
+                                     lyric=cromatic[(n.pitch.midi+key_diff) % 12]
+                                     )
+                new_note.tie = n.tie
+                if new_note.tie and new_note.tie.type == "continue":
+                    new_note.tie.type = "stop"
+                melody_out.append(new_note)
+        elif isinstance(n, note.Rest):
+            melody_out.append(note.Rest(quarterLength=n.quarterLength))
+
+
+
+bass_out.write('xml', fp=args.outfile)
+melody_out.write('xml', fp=args.outfile+"melody.musicxml")

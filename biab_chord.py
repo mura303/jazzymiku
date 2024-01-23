@@ -77,17 +77,17 @@ for i, measure in enumerate(melody_in.getElementsByClass(stream.Measure)):
         break
     for n in measure.notesAndRests:
         if isinstance(n, note.Note):
-            if n.tie and n.tie.type in ["continue", "stop"]:  # タイの先頭以外は休符にする、NEUTRINOが変になるから
-                bass_out.append(note.Rest(quarterLength=n.quarterLength))
+            if n.tie and n.tie.type in ["continue", "stop"]:
+                lyric = 'ー'
             else:
-                new_note = note.Note(pitch=n.pitch.midi,
-                                     quarterLength=n.quarterLength,
-                                     lyric=cromatic[(n.pitch.midi+key_diff) % 12]
-                                     )
-                bass_out.append(new_note)
+                lyric = cromatic[(n.pitch.midi + key_diff) % 12]
+            new_note = note.Note(pitch=n.pitch.midi,
+                                 quarterLength=n.quarterLength,
+                                 lyric=lyric,
+                                 tie=n.tie)
+            bass_out.append(new_note)
         elif isinstance(n, note.Rest):
             bass_out.append(note.Rest(quarterLength=n.quarterLength))
 
 
 bass_out.write('xml', fp=args.outfile)
-#melody_out.write('xml', fp=args.outfile+"melody.musicxml")

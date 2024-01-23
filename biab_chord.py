@@ -7,9 +7,15 @@ from common import cromatic
 parser = argparse.ArgumentParser()
 parser.add_argument("file", help="Input file to be parsed")
 parser.add_argument('outfile', help='outfile')
+parser.add_argument('--measurenum', help='melody')
 args = parser.parse_args()
 
 score = converter.parse(args.file)
+
+if args.measurenum:
+    measure_par_chorus = int(args.measurenum)
+else:
+    measure_par_chorus = 32
 
 bass_in = score.parts[0]
 melody_in = score.parts[-1]  # 最後のパートがメロディーと仮定
@@ -37,13 +43,15 @@ melody_out.insert(0, tempo)
 last_pitch = None # おかしな楽譜だとありえるので例外が出るようにしておく
 
 for i, measure in enumerate(bass_in.getElementsByClass(stream.Measure)):
-    if i<2:
+    if i < 2:
         bass_out.append(note.Rest(quarterLength=4))
         continue
+    if i == 2+measure_par_chorus:
+        break
 
     chords = list(measure.recurse().getElementsByClass('Harmony'))
     
-    if len(chords)>0:
+    if len(chords) > 0:
         beats = [chords[i+1].beat - chords[i].beat for i in range(len(chords)-1)]
         beats.append(beats_per_measure-sum(beats))
         
@@ -62,32 +70,24 @@ for i, measure in enumerate(bass_in.getElementsByClass(stream.Measure)):
                                   lyric=cromatic[(last_pitch+key_diff) % 12]))
 
 
-def too_long_tie(last_note):
-    if isinstance(last_note, note.Rest): # 変換されて休符になってる
-        return True
-    if last_note.tie and last_note.tie.type == "stop":
-        return True
-    return False
-
-
-for measure in melody_in.getElementsByClass(stream.Measure):
+for i, measure in enumerate(melody_in.getElementsByClass(stream.Measure)):
+    if i < 2:
+        continue
+    if i == 2+measure_par_chorus:
+        break
     for n in measure.notesAndRests:
         if isinstance(n, note.Note):
-            if n.tie and too_long_tie(melody_out[-1]):  # タイの先頭以外は休符にする、NEUTRINOが変になるから
-                melody_out.append(note.Rest(quarterLength=n.quarterLength))
+            if n.tie and n.tie.type in ["continue", "stop"]:  # タイの先頭以外は休符にする、NEUTRINOが変になるから
+                bass_out.append(note.Rest(quarterLength=n.quarterLength))
             else:
                 new_note = note.Note(pitch=n.pitch.midi,
                                      quarterLength=n.quarterLength,
                                      lyric=cromatic[(n.pitch.midi+key_diff) % 12]
                                      )
-                new_note.tie = n.tie
-                if new_note.tie and new_note.tie.type == "continue":
-                    new_note.tie.type = "stop"
-                melody_out.append(new_note)
+                bass_out.append(new_note)
         elif isinstance(n, note.Rest):
-            melody_out.append(note.Rest(quarterLength=n.quarterLength))
-
+            bass_out.append(note.Rest(quarterLength=n.quarterLength))
 
 
 bass_out.write('xml', fp=args.outfile)
-melody_out.write('xml', fp=args.outfile+"melody.musicxml")
+#melody_out.write('xml', fp=args.outfile+"melody.musicxml")

@@ -8,9 +8,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("file", help="Input file to be parsed")
 parser.add_argument('outfile', help='outfile')
 parser.add_argument('--measurenum', help='melody')
+parser.add_argument('--keydiff', help='key differece semitones. G=7, F=5, C=0, D=2')
 args = parser.parse_args()
 
 score = converter.parse(args.file)
+
 
 if args.measurenum:
     measure_par_chorus = int(args.measurenum)
@@ -29,7 +31,11 @@ print(f"Key of the song: {key}")
 num_sharps_flats = key.sharps
 print(f"Number of sharps or flats: {num_sharps_flats}")
 
-key_diff = num_sharps_flats
+
+if args.keydiff:
+    key_diff = -int(args.keydiff)
+else:
+    key_diff = num_sharps_flats
 
 
 beats_per_measure = bass_in.getTimeSignatures()[0].numerator
@@ -83,8 +89,8 @@ for i, measure in enumerate(melody_in.getElementsByClass(stream.Measure)):
                 lyric = cromatic[(n.pitch.midi + key_diff) % 12]
             new_note = note.Note(pitch=n.pitch.midi,
                                  quarterLength=n.quarterLength,
-                                 lyric=lyric,
-                                 tie=n.tie)
+                                 lyric=lyric)
+            new_note.tie = n.tie
             bass_out.append(new_note)
         elif isinstance(n, note.Rest):
             bass_out.append(note.Rest(quarterLength=n.quarterLength))

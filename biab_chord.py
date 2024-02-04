@@ -24,18 +24,15 @@ melody_in = score.parts[-1]  # 最後のパートがメロディーと仮定
 print(f"bass_part: {bass_in.partName}")
 print(f"melody_part: {melody_in.partName}")
 
-
 key = score.analyze('key')
-print(f"Key of the song: {key}")
-
-num_sharps_flats = key.sharps
-print(f"Number of sharps or flats: {num_sharps_flats}")
-
+print(f"analyzed key of the song: {key}")
 
 if args.keydiff:
     key_diff = -int(args.keydiff)
 else:
-    key_diff = num_sharps_flats
+    key_diff = -(key.tonic.midi % 12)
+
+print(f"key diff: {key_diff}")
 
 
 beats_per_measure = bass_in.getTimeSignatures()[0].numerator

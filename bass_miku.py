@@ -1,16 +1,15 @@
 from functools import reduce
+import sys
 
-import click
 import music21
 from music21 import *
 from common import cromatic, chord_lyric
 import xml.etree.ElementTree as ET
 
 
-@click.command()
-@click.option('--xml', required=True)
-def main(xml):
+def main():
     # 楽譜を読み込む
+    xml = sys.argv[1]
     score = converter.parse(xml)
     tree = ET.parse(xml)
     for elem in tree.iter(tag='fifths'):
@@ -51,7 +50,7 @@ def main(xml):
             chord_type.lyric = chord_lyric.get(n.commonName, chord_lyric.get(n.chordKind, "ワ")) # ワカラン の ワ
 
             if chord_type.lyric == "ワ":
-                print(f"{n.commonName} {n.chordKind}")
+                print(f"common:{n.commonName}, kind:{n.chordKind}")
                 raise("unknown chord type")
 
             print(f"{n.figure} lyric:{chord_type.lyric} commonName:{n.commonName} chordKind:{n.chordKind}")

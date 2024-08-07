@@ -17,6 +17,8 @@ cantus = score.parts[0]
 
 for i, n in enumerate(cantus.recurse().getElementsByClass('Note')):
     n.lyric = cromatic[(n.pitch.midi - offset) % 12]
+    # １オクターブ上げる
+    n.pitch.transpose(12*2, inPlace=True)
 
 score.write('xml', fp=sys.argv[2])
 

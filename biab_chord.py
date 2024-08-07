@@ -14,11 +14,18 @@ args = parser.parse_args()
 
 score = converter.parse(args.file)
 
+def get_measure_per_chorus( score_part ):
+    part_measures_count = len(score_part.getElementsByClass(stream.Measure))
+    print(f"パート内の小節数: {part_measures_count}")
+    measure_per_chorus = int(part_measures_count - 4)
+    print(f"measurenum : {measure_per_chorus}")
+    return measure_per_chorus
+
 
 if args.measurenum:
     measure_par_chorus = int(args.measurenum)
 else:
-    measure_par_chorus = biab_bassline.get_measure_per_chorus(score.parts[0])
+    measure_par_chorus = get_measure_per_chorus(score.parts[0])
 
 bass_in = score.parts[0]
 melody_in = score.parts[-2]  # 最後のパートがメロディーと仮定、左手右手あるから-2

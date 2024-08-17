@@ -3,7 +3,6 @@ import pathlib
 import sys
 import argparse
 from common import cromatic
-import biab_bassline
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file", help="Input file to be parsed")
@@ -13,6 +12,23 @@ parser.add_argument('--keydiff', help='key differece semitones. G=7, F=5, C=0, D
 args = parser.parse_args()
 
 score = converter.parse(args.file)
+
+def get_key_diff(filename):
+    import xml.etree.ElementTree as ET
+
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    # part/measure/attributes/key/fifthsを取得
+    for part in root.findall('.//part'):
+        for measure in part.findall('measure'):
+            for attributes in measure.findall('attributes'):
+                for key in attributes.findall('key'):
+                    fifths = key.find('fifths').text
+                    print(f"Part ID: {part.attrib['id']}, Measure Number: {measure.attrib['number']}, Key Fifths: {fifths}")
+                    key_diff = (12 + int(fifths)) * 5 % 12
+
+    return key_diff
+
 
 def get_measure_per_chorus( score_part ):
     part_measures_count = len(score_part.getElementsByClass(stream.Measure))
@@ -28,7 +44,7 @@ else:
     measure_par_chorus = get_measure_per_chorus(score.parts[0])
 
 bass_in = score.parts[0]
-melody_in = score.parts[-2]  # 最後のパートがメロディーと仮定、左手右手あるから-2
+melody_in = score.parts[0]  # 最後のパートがメロディーと仮定、左手右手あるから-2
 print(f"bass_part: {bass_in.partName}")
 print(f"melody_part: {melody_in.partName}")
 
@@ -38,7 +54,7 @@ print(f"melody_part: {melody_in.partName}")
 if args.keydiff:
     key_diff = -int(args.keydiff)
 else:
-    key_diff = biab_bassline.get_key_diff(args.file)
+    key_diff = 0 # get_key_diff(args.file)
     
 print(f"key diff: {key_diff}")
 
@@ -60,7 +76,7 @@ if beats_per_measure == 3:
 
 last_pitch = None # おかしな楽譜だとありえるので例外が出るようにしておく
 
-for i, measure in enumerate(bass_in.getElementsByClass(stream.Measure)):
+for i, measure in enumerate(bass_in.expandRepeats().getElementsByClass(stream.Measure)):
     if i < 2:
         bass_out.append(note.Rest(quarterLength=beats_per_measure))
         continue

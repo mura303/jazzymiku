@@ -1,75 +1,45 @@
-from functools import reduce
-import sys
-
-import music21
 from music21 import *
-from common import cromatic, chord_lyric
-import xml.etree.ElementTree as ET
+import pathlib
+import sys
+import argparse
+from common import cromatic
+
+parser = argparse.ArgumentParser()
+parser.add_argument("file", help="Input file to be parsed")
+parser.add_argument('outfile', help='outfile')
+args = parser.parse_args()
+
+score = converter.parse(args.file)
+
+def get_key_diff(filename):
+    import xml.etree.ElementTree as ET
+
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    # part/measure/attributes/key/fifthsを取得
+    for part in root.findall('.//part'):
+        for measure in part.findall('measure'):
+            for attributes in measure.findall('attributes'):
+                for key in attributes.findall('key'):
+                    fifths = key.find('fifths').text
+                    print(f"Part ID: {part.attrib['id']}, Measure Number: {measure.attrib['number']}, Key Fifths: {fifths}")
+                    key_diff = (12 + int(fifths)) * 5 % 12
+
+    return key_diff
 
 
-def main():
-    # 楽譜を読み込む
-    xml = sys.argv[1]
-    score = converter.parse(xml)
-    tree = ET.parse(xml)
-    for elem in tree.iter(tag='fifths'):
-        offset = 7*int(elem.text) % 12
+score_in = score.parts[0]
+key_diff = get_key_diff(args.file)
+beats_per_measure = score_in.getTimeSignatures()[0].numerator
+score_out = stream.Score()
 
-    song_key = score.analyze('key')
-    timesig = score.parts[0].recurse().getElementsByClass('TimeSignature')[0].numerator
-    if score.parts[0].recurse().getElementsByClass('TimeSignature')[0].denominator != 4:
-        """分母は4を前提。6/8だと変になる。"""
-        raise("denominator must be 4")
+tempo = score_in.metronomeMarkBoundaries()[0][-1]
+score_out.insert(0, tempo)
 
-    my_score = stream.Score()
-    my_score.metadata = score.metadata
+if beats_per_measure == 3:
+    score_out.append(meter.TimeSignature('3/4'))
 
-    my_part = stream.Part()
-    my_part.append(tempo.MetronomeMark(number=120))
-
-    my_score.insert(my_part)
-
-    # 小節ごとに処理する
-    for i, measure in enumerate(score.parts[0].getElementsByClass('Measure')):
-        new_notes = []
-        for n in measure.getElementsByClass('ChordSymbol'):
-            """ nは必ず4分音符ひとつぶんの長さが設定されているのに注意 """
-            root = note.Note()
-            root.pitch = pitch.Pitch(n.pitches[0], octave=4)
-            root.lyric = cromatic[(root.pitch.midi - offset) % 12]
-
-            d = music21.duration.Duration()
-
-            d.quarterLength = 1.0
-
-            root.duration = d
-
-            chord_type = note.Note()
-            chord_type.pitch = pitch.Pitch(n.pitches[0], octave=4)
-
-            chord_type.lyric = chord_lyric.get(n.commonName, chord_lyric.get(n.chordKind, "ワ")) # ワカラン の ワ
-
-            if chord_type.lyric == "ワ":
-                print(f"common:{n.commonName}, kind:{n.chordKind}")
-                raise("unknown chord type")
-
-            print(f"{n.figure} lyric:{chord_type.lyric} commonName:{n.commonName} chordKind:{n.chordKind}")
-
-            # 一小節に2つ以上コードが書いてあるパターン（バグってるいま）
-            if len(new_notes) > 0:
-                new_notes[-1].duration.quarterLength -= n.beat-1
-
-            d2 = music21.duration.Duration()
-            d2.quarterLength = timesig - reduce(lambda x, y: x + y.duration.quarterLength, new_notes, 0) - d.quarterLength
-            chord_type.duration = d2
-
-            new_notes.append(root)
-            new_notes.append(chord_type)
-
-        my_part.append(new_notes)
-
-    my_score.write('musicxml', fp='out.musicxml')
-
-
-if __name__ == '__main__':
-    main()
+for measure in score_in.getElementsByClass(stream.Measure):
+    for n in measure.getElementsByClass('ChordSymbol'):
+        print(f"{n.beat}:{n.commonName}:{n.chordKind}{n.figure}")
+        import pdb; pdb.set_trace()

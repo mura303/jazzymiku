@@ -8,6 +8,8 @@ chord_lyric = {
     'major-sixth': 'メ',
 
     'minor triad' : 'マ',
+    'minor-sixth' : 'マ',
+    'minor-ninth' : 'マ',
     'minor seventh chord' : 'マ',
     'enharmonic equivalent to minor seventh chord' : 'マ',
 

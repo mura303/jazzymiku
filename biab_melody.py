@@ -42,6 +42,9 @@ print(f"beats : {beats_per_measure}")
 melody_out = stream.Score()
 
 tempo = melody_in.metronomeMarkBoundaries()[0][-1]
+tempo.number = 120
+tempo.numberSounding = 120
+
 melody_out.insert(0, tempo)
 
 if beats_per_measure == 3:

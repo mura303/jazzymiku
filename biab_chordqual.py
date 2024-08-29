@@ -33,8 +33,9 @@ key_diff = get_key_diff(args.file)
 beats_per_measure = score_in.getTimeSignatures()[0].numerator
 score_out = stream.Score()
 
-tempo = score_in.metronomeMarkBoundaries()[0][-1].clone()
+tempo = score_in.metronomeMarkBoundaries()[0][-1]
 tempo.number = 120
+tempo.numberSounding = 120
 
 score_out.insert(0, tempo)
 

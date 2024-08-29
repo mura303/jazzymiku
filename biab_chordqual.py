@@ -56,7 +56,7 @@ for measure in score_in.getElementsByClass(stream.Measure):
         if chords[i]:
             root = note.Note()
             root.pitch = pitch.Pitch(n.pitches[0], octave=4)
-            root.lyric = cromatic[(root.pitch.midi - key_diff) % 12]
+            root.lyric = cromatic[(root.pitch.midi + key_diff) % 12]
             root.duration = duration.Duration()
             root.duration.quarterLength = 0.5
             score_out.append(root)

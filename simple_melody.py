@@ -60,7 +60,7 @@ for measure in melody_in.getElementsByClass(stream.Measure):
             new_note = note.Note(pitch=n.pitch.midi,
                                  quarterLength=n.quarterLength,
                                  lyric=lyric)
-            new_note.transpose(2*12, inPlace=True)
+            new_note.transpose(1*12, inPlace=True)
             new_note.tie = n.tie
 
             melody_out.append(new_note)

@@ -7,6 +7,10 @@ from common import cromatic
 parser = argparse.ArgumentParser()
 parser.add_argument("file", help="Input file to be parsed")
 parser.add_argument('outfile', help='outfile')
+parser.add_argument('-p', '--part', type=int, help='Part number to process', default=0)
+parser.add_argument('-t', '--transpose', type=int, help='transport chromatic num', default=0)
+
+
 args = parser.parse_args()
 
 score = converter.parse(args.file)
@@ -28,7 +32,7 @@ def get_key_diff(filename):
     return key_diff
 
 
-melody_in = score.parts[0]  # 最後のパートがメロディーと仮定、左手右手あるから-2
+melody_in = score.parts[args.part]  # partオプションの値を使用して選択
 
 key_diff = get_key_diff(args.file)
     
@@ -60,7 +64,7 @@ for measure in melody_in.getElementsByClass(stream.Measure):
             new_note = note.Note(pitch=n.pitch.midi,
                                  quarterLength=n.quarterLength,
                                  lyric=lyric)
-            new_note.transpose(1*12, inPlace=True)
+            new_note.transpose(args.transpose, inPlace=True)
             new_note.tie = n.tie
 
             melody_out.append(new_note)
